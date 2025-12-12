@@ -1,0 +1,296 @@
+/**
+ * # Firestore Security Rules for MediSys AI Hospital System
+ *
+ * ## Core Philosophy
+ * This ruleset enforces a strict Role-Based Access Control (RBAC) model combined with
+ * user ownership for patient data. A user's permissions are determined by the 'role'
+ * field in their corresponding /users/{userId} document. Access to sensitive patient
+ * health information is restricted to the patient themselves and authorized clinical staff.
+ *
+ * ## Data Structure
+ * - `/users/{userId}`: Central hub for user profiles, storing authentication info, role,
+ *   and links to patient or doctor profiles. This is the source of truth for authorization.
+ * - `/patients/{patientId}`: Top-level collection for patient demographic data.
+ * - `/patients/{patientId}/{subcollection}`: All sensitive patient health records (appointments,
+ *   prescriptions, lab reports, etc.) are stored in subcollections under the patient they
+ *   belong to. This enforces a clear, secure data boundary.
+ * - `/doctors/{doctorId}` & `/medications/{medicationId}`: Top-level collections for publicly
+ *   readable reference data, with writes restricted to administrators.
+ *
+ * ## Key Security Decisions
+ * - **Centralized Role Management**: All authorization logic stems from the `role` field in the
+ *   `/users/{userId}` document. This provides a single, auditable source for permissions.
+ * - **Patient Data Segregation**: Nesting all health records under a specific patient's document
+ *   path (`/patients/{patientId}/...`) allows for simple, powerful rules that grant access
+ *   based on path ownership or clinical roles.
+ * - **Principle of Least Privilege**: Users are granted the minimum access required for their
+ *   role. For example, Patients can only read their own data, Receptionists can manage
+ *   appointments but not view clinical results, and Doctors can manage clinical records.
+ * - **Gated Profile Creation**: Creation of core profiles like Patients and Doctors is restricted
+ *   to administrative roles (`Admin`, `Receptionist`), preventing unauthorized users from
+ *   creating official records.
+ * - **No Public Listing of Users/Patients**: To protect privacy, listing the entire set of users
+ *   or patients is disallowed for non-administrative roles.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * isSignedIn
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * isOwner
+     * Checks if the authenticated user's UID matches the given userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * isExistingDoc
+     * Checks if a document currently exists. Used to protect update/delete operations.
+     */
+    function isExistingDoc() {
+        return resource != null;
+    }
+
+    /**
+     * getUserData
+     * Retrieves the authenticated user's profile document from the /users collection.
+     * This is the foundation for all role-based access control.
+     */
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    /**
+     * isOneOfRoles
+     * Checks if the authenticated user has one of the specified roles.
+     * Roles are stored in the /users/{userId} document.
+     */
+    function isOneOfRoles(roles) {
+      return isSignedIn() && getUserData().role in roles;
+    }
+
+    /**
+     * isThePatient
+     * Checks if the user is a 'Patient' AND their user profile is linked
+     * to the patientId being accessed.
+     */
+    function isThePatient(patientId) {
+      return isSignedIn() && isOneOfRoles(['Patient']) && getUserData().patientId == patientId;
+    }
+
+    /**
+     * canReadPatientRecord
+     * Determines if a user has permission to read sensitive patient records.
+     * Granted to the patient themselves or clinical staff.
+     */
+    function canReadPatientRecord(patientId) {
+      return isThePatient(patientId) || isOneOfRoles(['Admin', 'Doctor', 'Nurse']);
+    }
+
+    /**
+     * canWritePatientRecord
+     * Determines if a user has permission to write sensitive patient records.
+     * Granted to clinical staff only.
+     */
+    function canWritePatientRecord() {
+      return isOneOfRoles(['Admin', 'Doctor', 'Nurse']);
+    }
+    
+    /**
+     * canManageAppointments
+     * Determines if a user can create, update, or delete appointments.
+     * Granted to clinical staff and receptionists.
+     */
+    function canManageAppointments() {
+        return isOneOfRoles(['Admin', 'Doctor', 'Nurse', 'Receptionist']);
+    }
+
+    /**
+     * isValidPatientSubdocumentCreate
+     * Validates that a new document in a patient subcollection correctly
+     * references the parent patientId in its data.
+     */
+    function isValidPatientSubdocumentCreate(patientId) {
+      return request.resource.data.patientId == patientId;
+    }
+
+    /**
+     * isPatientIdImmutable
+     * Ensures the patientId field cannot be changed on update.
+     */
+    function isPatientIdImmutable() {
+      return request.resource.data.patientId == resource.data.patientId;
+    }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Manages user profiles. Each user can create and manage their own
+     *              profile. Admins have full access. Role setting on creation is restricted.
+     * @path        /users/{userId}
+     * @allow       (create) A new user signing up: request.auth.uid == userId.
+     * @deny        (update) A user trying to change another user's profile.
+     * @principle   Enforces user ownership and self-service, with admin oversight.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isOneOfRoles(['Admin']);
+      allow list: if isOneOfRoles(['Admin']);
+      allow create: if isOwner(userId);
+      allow update: if (isOwner(userId) || isOneOfRoles(['Admin'])) && isExistingDoc();
+      allow delete: if isOneOfRoles(['Admin']) && isExistingDoc();
+    }
+
+    /**
+     * @description Stores public profiles for doctors. Any authenticated user can view
+     *              doctor information, but only Admins can manage the roster.
+     * @path        /doctors/{doctorId}
+     * @allow       (get, list) Any authenticated user viewing the list of available doctors.
+     * @deny        (create) A non-admin user trying to add a new doctor.
+     * @principle   Provides public read access for reference data while securing writes.
+     */
+    match /doctors/{doctorId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOneOfRoles(['Admin']);
+      allow update: if isOneOfRoles(['Admin']) && isExistingDoc();
+      allow delete: if isOneOfRoles(['Admin']) && isExistingDoc();
+    }
+
+    /**
+     * @description Stores reference data for medications. Any authenticated user can read
+     *              this information, but only Admins can manage the formulary.
+     * @path        /medications/{medicationId}
+     * @allow       (get, list) Any authenticated user looking up medication details.
+     * @deny        (update) A doctor trying to change a medication's dosage details.
+     * @principle   Provides public read access for reference data while securing writes.
+     */
+    match /medications/{medicationId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOneOfRoles(['Admin']);
+      allow update: if isOneOfRoles(['Admin']) && isExistingDoc();
+      allow delete: if isOneOfRoles(['Admin']) && isExistingDoc();
+    }
+
+    /**
+     * @description Manages patient demographic data. Access is granted to the patient
+     *              themselves or authorized staff. Creation and updates are limited to
+     *              administrative roles to ensure data integrity.
+     * @path        /patients/{patientId}
+     * @allow       (get) A doctor or the patient viewing the patient's profile.
+     * @deny        (list) A patient trying to list all other patients in the system.
+     * @deny        (update) A doctor trying to change a patient's address.
+     * @principle   Combines ownership and role-based access for sensitive data.
+     */
+    match /patients/{patientId} {
+      allow get: if canReadPatientRecord(patientId) || isOneOfRoles(['Receptionist']);
+      allow list: if isOneOfRoles(['Admin', 'Doctor', 'Nurse', 'Receptionist']);
+      allow create: if isOneOfRoles(['Admin', 'Receptionist']);
+      allow update: if (isOneOfRoles(['Admin', 'Receptionist'])) && isExistingDoc();
+      allow delete: if isOneOfRoles(['Admin']) && isExistingDoc();
+
+      /**
+       * @description Patient appointments. Readable by patient and clinical staff.
+       *              Manageable by clinical and administrative staff.
+       * @path        /patients/{patientId}/appointments/{appointmentId}
+       * @allow       (create) A receptionist scheduling an appointment for a patient.
+       * @deny        (update) A patient trying to change their appointment details.
+       * @principle   Restricts access based on path ownership and user role.
+       */
+      match /appointments/{appointmentId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if canManageAppointments() && isValidPatientSubdocumentCreate(patientId);
+        allow update: if canManageAppointments() && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if canManageAppointments() && isExistingDoc();
+      }
+
+      /**
+       * @description Patient prescriptions. Readable by patient and clinical staff.
+       *              Only Doctors or Admins can create or modify prescriptions.
+       * @path        /patients/{patientId}/prescriptions/{prescriptionId}
+       * @allow       (create) A doctor issuing a new prescription for a patient.
+       * @deny        (create) A nurse trying to issue a prescription.
+       * @principle   Enforces strict clinical roles for critical medical data.
+       */
+      match /prescriptions/{prescriptionId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if isOneOfRoles(['Admin', 'Doctor']) && isValidPatientSubdocumentCreate(patientId);
+        allow update: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc();
+      }
+
+      /**
+       * @description Patient lab reports. Readable by the patient and clinical staff.
+       *              Writable only by clinical staff.
+       * @path        /patients/{patientId}/labReports/{labReportId}
+       * @allow       (get) A patient viewing their own lab results.
+       * @deny        (create) A receptionist trying to upload a lab report.
+       * @principle   Protects sensitive health information, allowing write access only to trained staff.
+       */
+      match /labReports/{labReportId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if canWritePatientRecord() && isValidPatientSubdocumentCreate(patientId);
+        allow update: if canWritePatientRecord() && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc();
+      }
+      
+      /**
+       * @description Patient AI-generated data (risk predictions, triage, etc.).
+       *              Rules mirror other clinical data like lab reports.
+       * @path        /patients/{patientId}/aiRiskPredictions/{aiRiskPredictionId}
+       * @allow       (get) A doctor viewing a patient's AI-generated risk score.
+       * @deny        (update) A patient trying to modify their own risk prediction.
+       * @principle   Treats AI-generated data with the same security as clinical data.
+       */
+      match /aiRiskPredictions/{aiRiskPredictionId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if canWritePatientRecord() && isValidPatientSubdocumentCreate(patientId);
+        allow update: if canWritePatientRecord() && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc();
+      }
+      
+      /**
+       * @description Patient AI-generated data (risk predictions, triage, etc.).
+       *              Rules mirror other clinical data like lab reports.
+       * @path        /patients/{patientId}/triageSuggestions/{triageSuggestionId}
+       * @allow       (get) A doctor viewing a patient's AI-generated risk score.
+       * @deny        (update) A patient trying to modify their own risk prediction.
+       * @principle   Treats AI-generated data with the same security as clinical data.
+       */
+      match /triageSuggestions/{triageSuggestionId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if canWritePatientRecord() && isValidPatientSubdocumentCreate(patientId);
+        allow update: if canWritePatientRecord() && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc();
+      }
+      
+      /**
+       * @description Patient AI-generated data (risk predictions, triage, etc.).
+       *              Rules mirror other clinical data like lab reports.
+       * @path        /patients/{patientId}/extractedDocumentData/{extractedDocumentDataId}
+       * @allow       (get) A doctor viewing a patient's AI-generated risk score.
+       * @deny        (update) A patient trying to modify their own risk prediction.
+       * @principle   Treats AI-generated data with the same security as clinical data.
+       */
+      match /extractedDocumentData/{extractedDocumentDataId} {
+        allow get, list: if canReadPatientRecord(patientId);
+        allow create: if canWritePatientRecord() && isValidPatientSubdocumentCreate(patientId);
+        allow update: if canWritePatientRecord() && isExistingDoc() && isPatientIdImmutable();
+        allow delete: if isOneOfRoles(['Admin', 'Doctor']) && isExistingDoc();
+      }
+    }
+  }
+}

@@ -1,0 +1,618 @@
+{
+  "entities": {
+    "Patient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Patient",
+      "type": "object",
+      "description": "Represents a patient in the hospital system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the patient entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the patient."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the patient."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The date of birth of the patient.",
+          "format": "date-time"
+        },
+        "gender": {
+          "type": "string",
+          "description": "The gender of the patient."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The contact number of the patient."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the patient.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the patient."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "gender",
+        "contactNumber",
+        "address"
+      ]
+    },
+    "Doctor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Doctor",
+      "type": "object",
+      "description": "Represents a doctor in the hospital system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the doctor entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the doctor."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the doctor."
+        },
+        "specialization": {
+          "type": "string",
+          "description": "The specialization of the doctor."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The contact number of the doctor."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the doctor.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "specialization",
+        "contactNumber"
+      ]
+    },
+    "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Appointment",
+      "type": "object",
+      "description": "Represents an appointment in the hospital system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the appointment entity."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N Appointment)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to Doctor. (Relationship: Doctor 1:N Appointment)"
+        },
+        "appointmentDateTime": {
+          "type": "string",
+          "description": "The date and time of the appointment.",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for the appointment."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the appointment (e.g., scheduled, completed, cancelled)."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "doctorId",
+        "appointmentDateTime",
+        "reason",
+        "status"
+      ]
+    },
+    "Medication": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Medication",
+      "type": "object",
+      "description": "Represents a medication.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the medication."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the medication."
+        },
+        "dosage": {
+          "type": "string",
+          "description": "The dosage of the medication."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the dosage (e.g., mg, ml)."
+        },
+        "route": {
+          "type": "string",
+          "description": "The route of administration (e.g., oral, IV)."
+        },
+        "form": {
+          "type": "string",
+          "description": "The form of the medication (e.g. pill, liquid)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "dosage",
+        "unit",
+        "route"
+      ]
+    },
+    "Prescription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Prescription",
+      "type": "object",
+      "description": "Represents a prescription issued by a doctor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the prescription."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N Prescription)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to Doctor. (Relationship: Doctor 1:N Prescription)"
+        },
+        "medicationId": {
+          "type": "string",
+          "description": "Reference to Medication. (Relationship: Medication 1:N Prescription)"
+        },
+        "datePrescribed": {
+          "type": "string",
+          "description": "The date the prescription was issued.",
+          "format": "date-time"
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Instructions for taking the medication."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "doctorId",
+        "medicationId",
+        "datePrescribed",
+        "instructions"
+      ]
+    },
+    "LabReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LabReport",
+      "type": "object",
+      "description": "Represents a lab report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the lab report."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N LabReport)"
+        },
+        "testName": {
+          "type": "string",
+          "description": "The name of the lab test."
+        },
+        "testDate": {
+          "type": "string",
+          "description": "The date the lab test was performed.",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "string",
+          "description": "The results of the lab test."
+        },
+        "technicianId": {
+          "type": "string",
+          "description": "The id of the technician who performed the test."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "testName",
+        "testDate",
+        "results"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the system.  Authentication details (like passwords) are assumed to be handled by Firebase Auth and not stored here.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity.  This ID should correspond to the Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for login.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (Admin, Doctor, Nurse, Receptionist, Patient)."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient, if the user is a patient. (Relationship: User 1:1 Patient)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to Doctor, if the user is a doctor. (Relationship: User 1:1 Doctor)"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role"
+      ]
+    },
+    "AiRiskPrediction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AiRiskPrediction",
+      "type": "object",
+      "description": "Stores AI predictions for disease risks.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the risk prediction."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N AiRiskPrediction)"
+        },
+        "predictionDate": {
+          "type": "string",
+          "description": "Date the prediction was made.",
+          "format": "date-time"
+        },
+        "heartDiseaseRisk": {
+          "type": "number",
+          "description": "Risk score for heart disease."
+        },
+        "diabetesRisk": {
+          "type": "number",
+          "description": "Risk score for diabetes."
+        },
+        "strokeRisk": {
+          "type": "number",
+          "description": "Risk score for stroke."
+        },
+        "kidneyDiseaseRisk": {
+          "type": "number",
+          "description": "Risk score for kidney disease."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "predictionDate",
+        "heartDiseaseRisk",
+        "diabetesRisk",
+        "strokeRisk",
+        "kidneyDiseaseRisk"
+      ]
+    },
+    "TriageSuggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TriageSuggestion",
+      "type": "object",
+      "description": "Stores AI triage suggestions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the triage suggestion."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N TriageSuggestion)"
+        },
+        "suggestionDate": {
+          "type": "string",
+          "description": "Date the suggestion was made.",
+          "format": "date-time"
+        },
+        "suggestedDoctorId": {
+          "type": "string",
+          "description": "Reference to Doctor suggested by the triage system. (Relationship: Doctor 1:N TriageSuggestion)"
+        },
+        "suggestedPriority": {
+          "type": "string",
+          "description": "Priority level suggested by the triage system."
+        },
+        "suggestedTests": {
+          "type": "array",
+          "description": "Tests suggested by the triage system.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "suggestionDate",
+        "suggestedDoctorId",
+        "suggestedPriority"
+      ]
+    },
+    "ExtractedDocumentData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExtractedDocumentData",
+      "type": "object",
+      "description": "Stores data extracted from documents using AI.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the extracted data."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to Patient. (Relationship: Patient 1:N ExtractedDocumentData)"
+        },
+        "documentType": {
+          "type": "string",
+          "description": "Type of the document (e.g., doctor's note, lab report)."
+        },
+        "extractionDate": {
+          "type": "string",
+          "description": "Date the data was extracted.",
+          "format": "date-time"
+        },
+        "medication": {
+          "type": "string",
+          "description": "Medication extracted from the document."
+        },
+        "diagnosis": {
+          "type": "string",
+          "description": "Diagnosis extracted from the document."
+        },
+        "followUpDate": {
+          "type": "string",
+          "description": "Follow-up date extracted from the document.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "documentType",
+        "extractionDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. The `userId` corresponds to the Firebase Auth UID. Contains the user's role. This document determines user permissions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}",
+        "definition": {
+          "entityName": "Patient",
+          "schema": {
+            "$ref": "#/backend/entities/Patient"
+          },
+          "description": "Stores patient data. Root-level collection for direct access to patient information.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/doctors/{doctorId}",
+        "definition": {
+          "entityName": "Doctor",
+          "schema": {
+            "$ref": "#/backend/entities/Doctor"
+          },
+          "description": "Stores doctor data. Root-level collection for direct access to doctor information.",
+          "params": [
+            {
+              "name": "doctorId",
+              "description": "Unique identifier for the doctor."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/medications/{medicationId}",
+        "definition": {
+          "entityName": "Medication",
+          "schema": {
+            "$ref": "#/backend/entities/Medication"
+          },
+          "description": "Stores medication information. Accessible globally for reference by prescriptions.",
+          "params": [
+            {
+              "name": "medicationId",
+              "description": "Unique identifier for the medication."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointments for a specific patient.  Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "appointmentId",
+              "description": "Unique identifier for the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/prescriptions/{prescriptionId}",
+        "definition": {
+          "entityName": "Prescription",
+          "schema": {
+            "$ref": "#/backend/entities/Prescription"
+          },
+          "description": "Stores prescriptions for a specific patient. Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "prescriptionId",
+              "description": "Unique identifier for the prescription."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/labReports/{labReportId}",
+        "definition": {
+          "entityName": "LabReport",
+          "schema": {
+            "$ref": "#/backend/entities/LabReport"
+          },
+          "description": "Stores lab reports for a specific patient. Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "labReportId",
+              "description": "Unique identifier for the lab report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/aiRiskPredictions/{aiRiskPredictionId}",
+        "definition": {
+          "entityName": "AiRiskPrediction",
+          "schema": {
+            "$ref": "#/backend/entities/AiRiskPrediction"
+          },
+          "description": "Stores AI risk predictions for a specific patient. Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "aiRiskPredictionId",
+              "description": "Unique identifier for the AI risk prediction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/triageSuggestions/{triageSuggestionId}",
+        "definition": {
+          "entityName": "TriageSuggestion",
+          "schema": {
+            "$ref": "#/backend/entities/TriageSuggestion"
+          },
+          "description": "Stores triage suggestions for a specific patient. Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "triageSuggestionId",
+              "description": "Unique identifier for the triage suggestion."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/extractedDocumentData/{extractedDocumentDataId}",
+        "definition": {
+          "entityName": "ExtractedDocumentData",
+          "schema": {
+            "$ref": "#/backend/entities/ExtractedDocumentData"
+          },
+          "description": "Stores data extracted from documents for a specific patient. Path-based ownership for secure access.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the patient."
+            },
+            {
+              "name": "extractedDocumentDataId",
+              "description": "Unique identifier for the extracted document data."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure prioritizes security and scalability for the MediSys AI hospital system, adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User authentication is handled by Firebase Auth, and the structure is designed to facilitate simple and robust security rules.  The main strategy used is Authorization Independence via Denormalization.\n\n**Core Collections:**\n\n*   **/users/{userId}**: Stores user profiles.  The `userId` matches the Firebase Auth UID. This collection holds the user's role and references to patient or doctor documents if applicable.\n*   **/patients/{patientId}**: Stores patient data. Patient documents are directly accessible, simplifying patient data retrieval and management.\n*   **/doctors/{doctorId}**: Stores doctor data. Doctor documents are directly accessible, mirroring the patient structure for consistency.\n*   **/medications/{medicationId}**: Stores medication information. Accessible globally for reference by prescriptions.\n\n**Subcollections (for User-Owned Data):**\n\n*   **/patients/{patientId}/appointments/{appointmentId}**: Stores appointments for a specific patient.  This path-based ownership ensures that only the patient (or authorized roles) can access these appointments.\n*   **/patients/{patientId}/prescriptions/{prescriptionId}**: Stores prescriptions for a specific patient. This follows the same ownership model as appointments.\n*   **/patients/{patientId}/labReports/{labReportId}**: Stores lab reports for a specific patient.  Maintains consistent ownership.\n*   **/patients/{patientId}/aiRiskPredictions/{aiRiskPredictionId}**: Stores AI risk predictions for a specific patient.\n*   **/patients/{patientId}/triageSuggestions/{triageSuggestionId}**: Stores triage suggestions for a specific patient.\n*   **/patients/{patientId}/extractedDocumentData/{extractedDocumentDataId}**: Stores data extracted from documents for a specific patient.\n\n\n**Authorization Independence (Denormalization):**\n\n*   Subcollections inherit implicit ownership from their parent patient document (`/patients/{patientId}`). Security rules can then easily check if `request.auth.uid` matches the `patientId` or if the user has a role (Admin, Doctor, Nurse, Receptionist) allowing access to patient data.\n\n**QAPs (Rules are not Filters):**\n\n*   Structural Segregation ensures that each collection has a homogeneous security posture.  Patient-specific data is stored under the `/patients/{patientId}` path, making it easy to write rules that restrict access based on user ID and role.\n\n**Role-Based Access Control (DBAC):**\n\n*   User roles are stored in the `/users/{userId}` document. Security rules can read the user's role from this document to determine access permissions. No Custom Claims are used.\n\nThis structure promotes clear and maintainable security rules, avoids complex hierarchical authorization dependencies, and supports the application's core features."
+  }
+}
