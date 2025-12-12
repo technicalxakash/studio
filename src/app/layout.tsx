@@ -36,7 +36,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${ptSans.variable} ${spaceGrotesk.variable} ${sourceCodePro.variable}`}
     >
-      <body className={'font-sans antialiased'}>
+      <body className={'font-sans antialiased'} suppressHydrationWarning>
         {children}
         <Toaster />
       </body>
