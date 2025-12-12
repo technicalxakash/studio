@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 const ptSans = PT_Sans({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-body',
+  variable: '--font-sans',
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -40,7 +40,7 @@ export default function RootLayout({
         sourceCodePro.variable
       )}
     >
-      <body className={cn('font-body antialiased')}>
+      <body className={cn('font-sans antialiased')}>
         {children}
         <Toaster />
       </body>
