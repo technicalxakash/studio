@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, Settings, User, LogOut } from 'lucide-react';
+import { Search, Settings, User, LogOut, Loader2 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { DashboardNav } from '@/components/dashboard-nav';
 import {
@@ -168,5 +168,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    
