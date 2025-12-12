@@ -31,15 +31,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          'font-body antialiased',
-          ptSans.variable,
-          spaceGrotesk.variable,
-          sourceCodePro.variable
-        )}
-      >
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        ptSans.variable,
+        spaceGrotesk.variable,
+        sourceCodePro.variable
+      )}
+    >
+      <body className={cn('font-body antialiased')}>
         {children}
         <Toaster />
       </body>
