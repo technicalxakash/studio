@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +22,41 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
+  
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -49,16 +80,16 @@ export default function DashboardLayout({
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
-                    src="https://picsum.photos/seed/doc1/100"
-                    alt="@doctor"
+                    src={user.photoURL ?? "https://picsum.photos/seed/doc1/100"}
+                    alt={user.displayName ?? "User"}
                   />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="text-left hidden group-data-[state=expanded]:block">
                   <p className="text-sm font-medium text-sidebar-foreground">
-                    Dr. Ada Lovelace
+                    {user.displayName ?? user.email}
                   </p>
-                  <p className="text-xs text-muted-foreground">Admin</p>
+                  <p className="text-xs text-muted-foreground">User</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -78,7 +109,7 @@ export default function DashboardLayout({
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -104,16 +135,16 @@ export default function DashboardLayout({
                   className="relative h-9 w-9 rounded-full"
                 >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage
-                      src="https://picsum.photos/seed/doc1/100"
-                      alt="@doctor"
-                    />
-                    <AvatarFallback>AD</AvatarFallback>
+                     <AvatarImage
+                        src={user.photoURL ?? "https://picsum.photos/seed/doc1/100"}
+                        alt={user.displayName ?? "User"}
+                      />
+                      <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>Dr. Ada Lovelace</DropdownMenuLabel>
+                <DropdownMenuLabel>{user.displayName ?? user.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
@@ -124,7 +155,7 @@ export default function DashboardLayout({
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
@@ -137,3 +168,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    

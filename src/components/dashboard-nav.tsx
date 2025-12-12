@@ -8,6 +8,7 @@ import {
   Stethoscope,
   FileText,
   Bot,
+  Notebook,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -27,6 +28,11 @@ const navItems: NavItem[] = [
     href: '/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    href: '/dashboard/notes',
+    label: 'Notes',
+    icon: Notebook,
   },
   {
     href: '/dashboard/risk-prediction',
@@ -68,3 +74,5 @@ export function DashboardNav() {
     </SidebarMenu>
   );
 }
+
+    

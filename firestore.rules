@@ -16,6 +16,7 @@
  *   belong to. This enforces a clear, secure data boundary.
  * - `/doctors/{doctorId}` & `/medications/{medicationId}`: Top-level collections for publicly
  *   readable reference data, with writes restricted to administrators.
+ * - `/notes/{noteId}`: Stores notes for each user.
  *
  * ## Key Security Decisions
  * - **Centralized Role Management**: All authorization logic stems from the `role` field in the
@@ -153,6 +154,18 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if (isOwner(userId) || isOneOfRoles(['Admin'])) && isExistingDoc();
       allow delete: if isOneOfRoles(['Admin']) && isExistingDoc();
+    }
+    
+    /**
+     * @description Manages user notes. Each user can manage their own notes.
+     * @path        /notes/{noteId}
+     * @allow       (read, write) A user accessing their own notes.
+     * @deny        (read, write) A user trying to access another user's notes.
+     * @principle   Enforces user ownership of notes.
+     */
+    match /notes/{noteId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
     }
 
     /**
@@ -294,3 +307,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

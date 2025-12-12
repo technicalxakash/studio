@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -5,6 +7,7 @@ import {
   FileText,
   HeartPulse,
   Stethoscope,
+  Notebook
 } from 'lucide-react';
 import {
   Card,
@@ -15,8 +18,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/firebase';
 
 const features = [
+   {
+    title: 'Your Notes',
+    description:
+      'Create and manage your personal notes and reminders.',
+    href: '/dashboard/notes',
+    icon: Notebook,
+  },
   {
     title: 'AI Disease Risk Prediction',
     description:
@@ -48,18 +59,19 @@ const features = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useUser();
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="font-headline text-3xl md:text-4xl font-bold">
-          Welcome to MediSys AI
+          Welcome{user?.displayName ? `, ${user.displayName}`: ''} to MediSys AI
         </h1>
         <p className="text-muted-foreground mt-2">
           Your intelligent hospital management assistant.
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => (
           <Card key={feature.href} className="flex flex-col">
             <CardHeader>
@@ -85,3 +97,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -1,5 +1,58 @@
 {
   "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the system. Authentication details are handled by Firebase Auth.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity, corresponding to the Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for login.",
+          "format": "email"
+        }
+      },
+      "required": ["id", "email"]
+    },
+    "Note": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Note",
+      "type": "object",
+      "description": "Represents a single note created by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the note."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the note."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the note."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the note."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the note was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the note was last updated."
+        }
+      },
+      "required": ["id", "userId", "title", "createdAt", "updatedAt"]
+    },
     "Patient": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Patient",
@@ -252,40 +305,6 @@
         "results"
       ]
     },
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
-      "type": "object",
-      "description": "Represents a user in the system.  Authentication details (like passwords) are assumed to be handled by Firebase Auth and not stored here.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user entity.  This ID should correspond to the Firebase Auth UID."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user, used for login.",
-          "format": "email"
-        },
-        "role": {
-          "type": "string",
-          "description": "The role of the user (Admin, Doctor, Nurse, Receptionist, Patient)."
-        },
-        "patientId": {
-          "type": "string",
-          "description": "Reference to Patient, if the user is a patient. (Relationship: User 1:1 Patient)"
-        },
-        "doctorId": {
-          "type": "string",
-          "description": "Reference to Doctor, if the user is a doctor. (Relationship: User 1:1 Doctor)"
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "role"
-      ]
-    },
     "AiRiskPrediction": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AiRiskPrediction",
@@ -421,10 +440,7 @@
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
@@ -440,6 +456,22 @@
             {
               "name": "userId",
               "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/notes/{noteId}",
+        "definition": {
+          "entityName": "Note",
+          "schema": {
+            "$ref": "#/backend/entities/Note"
+          },
+          "description": "Stores user notes. The `noteId` is the unique identifier for the note.",
+          "params": [
+            {
+              "name": "noteId",
+              "description": "The unique identifier for the note."
             }
           ]
         }
@@ -616,3 +648,5 @@
     "reasoning": "This Firestore structure prioritizes security and scalability for the MediSys AI hospital system, adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User authentication is handled by Firebase Auth, and the structure is designed to facilitate simple and robust security rules.  The main strategy used is Authorization Independence via Denormalization.\n\n**Core Collections:**\n\n*   **/users/{userId}**: Stores user profiles.  The `userId` matches the Firebase Auth UID. This collection holds the user's role and references to patient or doctor documents if applicable.\n*   **/patients/{patientId}**: Stores patient data. Patient documents are directly accessible, simplifying patient data retrieval and management.\n*   **/doctors/{doctorId}**: Stores doctor data. Doctor documents are directly accessible, mirroring the patient structure for consistency.\n*   **/medications/{medicationId}**: Stores medication information. Accessible globally for reference by prescriptions.\n\n**Subcollections (for User-Owned Data):**\n\n*   **/patients/{patientId}/appointments/{appointmentId}**: Stores appointments for a specific patient.  This path-based ownership ensures that only the patient (or authorized roles) can access these appointments.\n*   **/patients/{patientId}/prescriptions/{prescriptionId}**: Stores prescriptions for a specific patient. This follows the same ownership model as appointments.\n*   **/patients/{patientId}/labReports/{labReportId}**: Stores lab reports for a specific patient.  Maintains consistent ownership.\n*   **/patients/{patientId}/aiRiskPredictions/{aiRiskPredictionId}**: Stores AI risk predictions for a specific patient.\n*   **/patients/{patientId}/triageSuggestions/{triageSuggestionId}**: Stores triage suggestions for a specific patient.\n*   **/patients/{patientId}/extractedDocumentData/{extractedDocumentDataId}**: Stores data extracted from documents for a specific patient.\n\n\n**Authorization Independence (Denormalization):**\n\n*   Subcollections inherit implicit ownership from their parent patient document (`/patients/{patientId}`). Security rules can then easily check if `request.auth.uid` matches the `patientId` or if the user has a role (Admin, Doctor, Nurse, Receptionist) allowing access to patient data.\n\n**QAPs (Rules are not Filters):**\n\n*   Structural Segregation ensures that each collection has a homogeneous security posture.  Patient-specific data is stored under the `/patients/{patientId}` path, making it easy to write rules that restrict access based on user ID and role.\n\n**Role-Based Access Control (DBAC):**\n\n*   User roles are stored in the `/users/{userId}` document. Security rules can read the user's role from this document to determine access permissions. No Custom Claims are used.\n\nThis structure promotes clear and maintainable security rules, avoids complex hierarchical authorization dependencies, and supports the application's core features."
   }
 }
+
+    

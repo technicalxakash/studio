@@ -14,23 +14,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
-type LoginFormProps = {
-  role: 'Admin' | 'Doctor' | 'Nurse' | 'Receptionist' | 'Patient';
-};
-
-export function LoginForm({ role }: LoginFormProps) {
+export function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,9 +47,9 @@ export function LoginForm({ role }: LoginFormProps) {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleSubmit}>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">{role} Login</CardTitle>
+            <CardTitle className="text-2xl font-bold">Login</CardTitle>
             <CardDescription>
-              Enter your credentials to access the {role} dashboard.
+              Enter your credentials to access the dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -52,11 +61,20 @@ export function LoginForm({ role }: LoginFormProps) {
                 placeholder="m@example.com"
                 required
                 disabled={loading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required disabled={loading} />
+              <Input
+                id="password"
+                type="password"
+                required
+                disabled={loading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
           </CardContent>
           <CardFooter>
@@ -70,3 +88,5 @@ export function LoginForm({ role }: LoginFormProps) {
     </div>
   );
 }
+
+    
