@@ -34,11 +34,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(
-        ptSans.variable,
-        spaceGrotesk.variable,
-        sourceCodePro.variable
-      )}
+      className={`${ptSans.variable} ${spaceGrotesk.variable} ${sourceCodePro.variable}`}
     >
       <body className={cn('font-sans antialiased')}>
         {children}
